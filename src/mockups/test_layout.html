@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background-color: gray;
+        width: 100vw;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center
+      }
+      .board-container {
+      }
+      .board {
+        margin: 0 auto;
+      }
+      .row {
+        display: flex;
+      }
+      .node {
+        width: 50px;
+        height: 50px;
+        background-color: white;
+      }
+      .edge {
+        background-color: #00FF00;
+      }
+      .v-edge {
+        width: 10px;
+        height: 50px;
+        margin: 0 5px;
+      }
+      .h-edge {
+        width: 50px;
+        height: 10px;
+        margin: 5px 0;
+      }
+      .dot {
+        width: 20px;
+        height: 10px;
+        background-color: gray;
+      }
+    </style>
+    <title>Huebrynth</title>
+  </head>
+  <body>
+    <div class="board-container">
+      <div class="board">
+        <div class="row n-row">
+          <div class="node"></div>
+          <div class="v-edge edge"></div>
+          <div class="node"></div>
+          <div class="v-edge edge"></div>
+          <div class="node"></div>
+        </div>
+        <div class="row e-row">
+          <div class="h-edge edge"></div>
+          <div class="dot"></div>
+          <div class="h-edge edge"></div>
+          <div class="dot"></div>
+          <div class="h-edge edge"></div>
+        </div>
+        <div class="row n-row">
+          <div class="node"></div>
+          <div class="v-edge edge"></div>
+          <div class="node"></div>
+          <div class="v-edge edge"></div>
+          <div class="node"></div>
+        </div>
+        <div class="row e-row">
+          <div class="h-edge edge"></div>
+          <div class="dot"></div>
+          <div class="h-edge edge"></div>
+          <div class="dot"></div>
+          <div class="h-edge edge"></div>
+        </div>
+        <div class="row n-row">
+          <div class="node"></div>
+          <div class="v-edge edge"></div>
+          <div class="node"></div>
+          <div class="v-edge edge"></div>
+          <div class="node"></div>
+        </div>
+        <div class="row e-row">
+          <div class="h-edge edge"></div>
+          <div class="dot"></div>
+          <div class="h-edge edge"></div>
+          <div class="dot"></div>
+          <div class="h-edge edge"></div>
+        </div>
+        <div class="row n-row">
+          <div class="node"></div>
+          <div class="v-edge edge"></div>
+          <div class="node"></div>
+          <div class="v-edge edge"></div>
+          <div class="node"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
