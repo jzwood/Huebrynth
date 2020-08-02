@@ -18,7 +18,7 @@ main =
 
 view model =
   div []
-  [ input [onKeyDown KeyDown, onInput Input ] []
+  [ input [onKeyDown CustomKeyDown, onInput Input ] []
   , div [] [ text ("Input: " ++ model.savedText) ]
   ]
 
@@ -29,7 +29,7 @@ onKeyDown tagger =
 
 type Msg
   = NoOp
-  | KeyDown Int
+  | CustomKeyDown Int
   | Input String
 
 
@@ -39,7 +39,7 @@ update msg model =
     NoOp ->
       model
 
-    KeyDown key ->
+    CustomKeyDown key ->
       if key == 13 then
         { model | savedText = model.currentText }
       else
