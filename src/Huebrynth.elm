@@ -1,6 +1,7 @@
 module Huebrynth exposing (..)
 
 import Browser
+import Browser.Events exposing (onAnimationFrameDelta)
 import Html exposing (Attribute, Html, button, div, text, ul, li)
 import Html.Attributes exposing (style, tabindex)
 import Html.Events exposing (on, keyCode, onInput)
@@ -11,11 +12,13 @@ import List.Extra exposing (find, getAt)
 
 -- MAIN
 
+main : Program () Model Msg
 main =
-  Browser.sandbox {
+  Browser.element {
     init = init,
     update = update,
-    view = view
+    view = view,
+    subscriptions = subscriptions
   }
 
 
@@ -44,7 +47,7 @@ type alias Model = {
   }
 
 type Direction = Left | Right | Up | Down
-type Msg = NoOp | KeyDown Int
+type Msg = NoOp | KeyDown Int | Frame Float
 
 colorScheme = {
   darkPurple = "#210b2cff",
@@ -67,8 +70,12 @@ keyCodeToDirection int =
     40 -> Just Down
     _ -> Nothing
 
-init : Model
-init = {
+
+subscriptions : Model -> Sub Msg
+subscriptions _ = onAnimationFrameDelta Frame
+
+init : flag -> (Model, Cmd Msg)
+init flag = ({
   board =
     [
       [ Node 0 Start
@@ -94,11 +101,18 @@ init = {
       y = 0
     },
     targetNode = 4
-  }
-  }
+  }}, Cmd.none)
 
 
 -- UPDATE
+
+getCurrentNode : Player -> Board -> Maybe (Int, Int, Node)
+getCurrentNode { currentPosition, targetNode } board =
+  let
+    indexedBoard = indexedMap (\y row -> indexedMap (\x node -> (x, y, node)) row) board |> concat
+    maybeCurrentNodePos = find (\(x, y, Node id _) -> id == targetNode) indexedBoard
+  in
+    maybeCurrentNodePos
 
 getNextTargetNode : Player -> Board -> Direction -> Maybe Node
 getNextTargetNode { currentPosition, targetNode} board direction =
@@ -117,28 +131,35 @@ getNextTargetNode { currentPosition, targetNode} board direction =
     getNextNode x y =
       case direction of
         Left -> coordToNode (x - 1) y
-        Up -> coordToNode x (y + 1)
+        Up -> coordToNode x (y - 1)
         Right -> coordToNode (x + 1) y
-        Down -> coordToNode x (y - 1)
+        Down -> coordToNode x (y + 1)
   in
     case maybeCurrentNodePos of
       Nothing -> Nothing
       Just (x, y, _) -> getNextNode x y
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg ({ board, player } as model) =
   case msg of
-    NoOp -> model
+    NoOp -> (model, Cmd.none)
     KeyDown code ->
       case (keyCodeToDirection code) of
-        Nothing -> model
+        Nothing -> (model, Cmd.none)
         Just direction ->
           let
             maybeNode = getNextTargetNode player board direction
           in
             case maybeNode of
-              Nothing -> model
-              Just (Node id _) -> { model | player = { player | targetNode = id }}
+              Nothing -> (model, Cmd.none)
+              Just (Node id _) -> ({ model | player = { player | targetNode = id }}, Cmd.none)
+    Frame delta ->
+      let
+        maybeNodePos = getCurrentNode player board
+      in
+        case maybeNodePos of
+          Nothing -> (model, Cmd.none)
+          Just (x, y, Node id _) -> ({ model | player = { player | targetNode = id }}, Cmd.none)
 
 -- VIEW
 
@@ -167,12 +188,12 @@ view { board, player } =
         , style "align-items" "center"
         ]
         [
-          div  [ style "position" "relative" ]
-            [ text ( String.fromInt player.targetNode) ]
-            --(div [ style "width" "50px"
-                --, style "height" "50px"
-                --, style "background-color" "#000000"
-                --, style "position" "absolute"
-                --, style "transform" ("translateX(" ++ String.fromInt x  ++ "px) translateY(" ++ String.fromInt y ++ "px)")
-                --] [] :: List.map viewRow board)
+          div  [ style "position" "relative"]
+            --[ text ( String.fromInt player.targetNode) ]
+            (div [ style "width" "50px"
+                , style "height" "50px"
+                , style "background-color" "#000000"
+                , style "position" "absolute"
+                , style "transform" ("translateX(" ++ String.fromInt x  ++ "px) translateY(" ++ String.fromInt y ++ "px)")
+                ] [] :: List.map viewRow board)
         ]
