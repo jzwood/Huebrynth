@@ -156,10 +156,11 @@ update msg ({ board, player } as model) =
     Frame delta ->
       let
         maybeNodePos = getCurrentNode player board
+        {x, y} = player.currentPosition
       in
         case maybeNodePos of
           Nothing -> (model, Cmd.none)
-          Just (x, y, Node id _) -> ({ model | player = { player | targetNode = id }}, Cmd.none)
+          Just (i, j, Node id _) -> ({ model | player = { player | currentPosition = { x = calcPos (i * 50) x, y = calcPos (j * 50) y} }}, Cmd.none)
 
 -- VIEW
 
@@ -197,3 +198,7 @@ view { board, player } =
                 , style "transform" ("translateX(" ++ String.fromInt x  ++ "px) translateY(" ++ String.fromInt y ++ "px)")
                 ] [] :: List.map viewRow board)
         ]
+
+-- Utils
+calcPos : Int -> Int -> Int
+calcPos a b = toFloat (a + b) / 2 |> round
