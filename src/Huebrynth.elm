@@ -7,6 +7,7 @@ import Html.Attributes exposing (style, class, tabindex)
 import Html.Events exposing (on, keyCode, onInput)
 import HuebrynthTypes exposing (..)
 import Json.Decode as Json
+import Level1 exposing (..)
 import List exposing (map, length, indexedMap, concat)
 import List.Extra exposing (find, getAt)
 
@@ -72,32 +73,14 @@ subscriptions _ = onAnimationFrameDelta Frame
 
 init : flag -> (Model, Cmd Msg)
 init flag = (
-  { board =
-    [
-      [ Node 0 Start
-      , Node 1 Empty
-      , Node 2 End
-      ],
-      [ Node 3 Empty
-      , Node 4 Empty
-      , Node 5 Empty
-      ],
-      [ Node 6 Empty
-      , Node 7 Empty
-      , Node 8 Empty
-      ],
-      [ Node 9 Empty
-      , Node 10 Empty
-      , Node 11 Empty
-      ]
-    ]
-  , edges = [ ]
+  { board = boardL1
+  , edges = edgesL1
   , player =
     { currentPosition =
       { x = 0
       , y = 0
       }
-    , targetNodeId = 4
+    , targetNodeId = getStartNode boardL1 0
     , counter = 1
     }
   }, Cmd.none)
@@ -138,7 +121,7 @@ canMoveToNode : NodeId -> NodeId -> Bool
 canMoveToNode a b = True
 
 isCounterMultipleOfLock : Int -> Lock -> Bool
-isCounterMultipleOfLock counter lock = remainderBy counter lock == 0
+isCounterMultipleOfLock counter lock = remainderBy lock counter == 0
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg ({ board, edges, player } as model) =
@@ -164,7 +147,11 @@ update msg ({ board, edges, player } as model) =
                     Just (Edge edgeId edgeType _ _) ->
                       case edgeType of
                         Open -> ({ model | player = { player | targetNodeId = nodeId }}, Cmd.none)
-                        Gated lock -> if isCounterMultipleOfLock counter lock then (model, Cmd.none) else (model, Cmd.none)
+                        Gated lock -> if isCounterMultipleOfLock counter lock
+                                        then
+                                          ({ model | player = { player | targetNodeId = nodeId, counter = counter + 1 }}, Cmd.none)
+                                        else
+                                          (model, Cmd.none)
     Frame delta ->
       let
         maybeNodePos = getCurrentNode player board

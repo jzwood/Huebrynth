@@ -1,6 +1,7 @@
 module HuebrynthTypes exposing (..)
 
 import List.Extra exposing (find)
+import List exposing (concat)
 
 type alias NodeId = Int
 type NodeType = Start | Empty | End
@@ -20,3 +21,12 @@ getEdgeFromNodeIds nodeId1 nodeId2 edges = find (\(Edge _ edgeType (Node id1 _) 
   (id1 == nodeId1 && id2 == nodeId2) ||
   (id1 == nodeId2 && id2 == nodeId1)
   ) edges
+
+getStartNode : Board -> Int -> NodeId
+getStartNode board defaultId =
+  let
+      maybeNode = find (\(Node id nodeType) -> nodeType == Start) (concat board)
+  in
+    case maybeNode of
+      Nothing -> defaultId
+      Just (Node id nodeType) -> id
