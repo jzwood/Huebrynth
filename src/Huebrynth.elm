@@ -51,7 +51,7 @@ pallette = { darkPurple = "#210b2cff"
   , pinkLavender = "#d8b4e2ff"
   }
 
-boxSize = 50
+boxSize = 65
 boxpx = String.fromInt boxSize ++ "px"
 
 onKeyDown : (Int -> Msg) -> Attribute Msg
@@ -167,8 +167,28 @@ update msg ({ board, edges, player } as model) =
 -- VIEW
 
 view : Model -> Html Msg
-view { board, player } =
+view { board, edges, player } =
   let
+    viewEdge : Edge -> Html Msg
+    viewEdge edge =
+      let
+          (i, j, isHorizontal)  = edgeToPosition board edge
+          rotation = if isHorizontal then "0" else "90"
+          width = 5
+          height = boxSize - 5
+          --width = if isHorizontal then 10 else 20
+          --height = if isHorizontal then 20 else 10
+      in
+        div [ style "position" "absolute"
+            , style "background-color" "black"
+            , style "top" (String.fromInt (i * toFloat boxSize |> round) ++ "px")
+            , style "left" (String.fromInt (j * toFloat boxSize |> round) ++ "px")
+            , style "width" (String.fromInt width ++ "px")
+            , style "height" (String.fromInt height ++ "px")
+            , style "transform" ("rotateZ(" ++ rotation ++ "deg)")
+            , style "transform-origin" "center"
+            ] [ ]
+
     viewNode : Node -> Html Msg
     viewNode (Node id state) = div [ style "width" boxpx
                                , style "height" boxpx
@@ -198,10 +218,18 @@ view { board, player } =
           div  [ style "position" "relative"]
             (div [ style "width" boxpx
                 , style "height" boxpx
-                , style "background-color" "#000000"
+                , style "background-color" "black"
+                , style "color" "white"
                 , style "position" "absolute"
+                , style "display" "flex"
+                , style "justify-content" "center"
+                , style "align-items" "center"
+                , style "font-family" "arial"
+                , style "font-size" "20px"
                 , style "transform" ("translateX(" ++ String.fromInt x  ++ "px) translateY(" ++ String.fromInt y ++ "px)")
-                ] [] :: List.map viewRow board)
+                ] [ String.fromInt player.counter |> text ]
+                :: List.map viewEdge edges
+                ++ List.map viewRow board)
         ]
 
 -- Utils
