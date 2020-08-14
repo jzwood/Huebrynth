@@ -162,32 +162,30 @@ update msg ({ board, edges, player } as model) =
           Just (i, j, Node id _) ->
             ({ model | player = {
               player | currentPosition =
-                { x = calcPos (i * boxSize) x, y = calcPos (j * boxSize) y} }}, Cmd.none)
+                { x = calcPos (i * (boxSize + 5)) x, y = calcPos (j * (boxSize + 5)) y} }}, Cmd.none)
 
 -- VIEW
 
 view : Model -> Html Msg
 view { board, edges, player } =
   let
+    width = 5
+    height = boxSize
     viewEdge : Edge -> Html Msg
     viewEdge edge =
       let
           (i, j, isHorizontal)  = edgeToPosition board edge
           rotation = if isHorizontal then "0" else "90"
-          width = 5
-          height = boxSize - 5
-          --width = if isHorizontal then 10 else 20
-          --height = if isHorizontal then 20 else 10
       in
         div [ style "position" "absolute"
             , style "background-color" "black"
-            , style "top" (String.fromInt (i * toFloat boxSize |> round) ++ "px")
-            , style "left" (String.fromInt (j * toFloat boxSize |> round) ++ "px")
+            , style "top" (String.fromFloat (i * toFloat (height + width) + width / 2) ++ "px")
+            , style "left" (String.fromFloat ((0.5 + j) * toFloat (height + width) - width / 2) ++ "px")
             , style "width" (String.fromInt width ++ "px")
             , style "height" (String.fromInt height ++ "px")
             , style "transform" ("rotateZ(" ++ rotation ++ "deg)")
             , style "transform-origin" "center"
-            ] [ ]
+            ] [ "(" ++ String.fromFloat i ++ "," ++ String.fromFloat j ++ ")" |> text ]
 
     viewNode : Node -> Html Msg
     viewNode (Node id state) = div [ style "width" boxpx
@@ -196,8 +194,11 @@ view { board, edges, player } =
                                , style "display" "flex"
                                , style "justify-content" "center"
                                , style "align-items" "center"
+                               , style "border" "1px solid red"
+                               , style "box-sizing" "border-box"
+                               , style "margin" (String.fromFloat (width / 2) ++ "px")
                                , class "node"
-                               ] [ (if state == End then "★" else String.fromInt id) |> text ]
+                               ] [ (if state == End then "★" else "") |> text ]
 
     viewRow : List Node -> Html Msg
     viewRow rows =
@@ -218,7 +219,7 @@ view { board, edges, player } =
           div  [ style "position" "relative"]
             (div [ style "width" boxpx
                 , style "height" boxpx
-                , style "background-color" "black"
+                , style "background-color" "#000000"
                 , style "color" "white"
                 , style "position" "absolute"
                 , style "display" "flex"
@@ -227,7 +228,9 @@ view { board, edges, player } =
                 , style "font-family" "arial"
                 , style "font-size" "20px"
                 , style "transform" ("translateX(" ++ String.fromInt x  ++ "px) translateY(" ++ String.fromInt y ++ "px)")
-                ] [ String.fromInt player.counter |> text ]
+                ] [
+                  div [] [ String.fromInt player.counter |> text ]
+                  ]
                 :: List.map viewEdge edges
                 ++ List.map viewRow board)
         ]
