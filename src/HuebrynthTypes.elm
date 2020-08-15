@@ -12,7 +12,7 @@ type IndexedNode = IndexedNode (Int, Int) Node
 
 type alias Lock = Int
 type alias EdgeId = Int
-type EdgeType = Open | Gated Lock
+type EdgeType = Open | Wall | Gated Lock
 type Edge = Edge EdgeId EdgeType Node Node
 type alias Board = List (List Node)
 type alias Edges = List Edge

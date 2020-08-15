@@ -51,7 +51,7 @@ pallette = { darkPurple = "#210b2cff"
   , pinkLavender = "#d8b4e2ff"
   }
 
-boxSize = 65
+boxSize = 75
 boxpx = String.fromInt boxSize ++ "px"
 
 onKeyDown : (Int -> Msg) -> Attribute Msg
@@ -147,6 +147,7 @@ update msg ({ board, edges, player } as model) =
                     Just (Edge edgeId edgeType _ _) ->
                       case edgeType of
                         Open -> ({ model | player = { player | targetNodeId = nodeId }}, Cmd.none)
+                        Wall -> (model, Cmd.none)
                         Gated lock -> if isCounterMultipleOfLock counter lock
                                         then
                                           ({ model | player = { player | targetNodeId = nodeId, counter = counter + 1 }}, Cmd.none)
@@ -162,41 +163,65 @@ update msg ({ board, edges, player } as model) =
           Just (i, j, Node id _) ->
             ({ model | player = {
               player | currentPosition =
-                { x = calcPos (i * (boxSize + 5)) x, y = calcPos (j * (boxSize + 5)) y} }}, Cmd.none)
+                { x = calcPos (i * boxSize) x, y = calcPos (j * boxSize) y} }}, Cmd.none)
 
 -- VIEW
 
 view : Model -> Html Msg
 view { board, edges, player } =
   let
-    width = 5
-    height = boxSize
     viewEdge : Edge -> Html Msg
-    viewEdge edge =
+    viewEdge ((Edge _ edgeType _ _) as edge) =
       let
-          (i, j, isHorizontal)  = edgeToPosition board edge
-          rotation = if isHorizontal then "0" else "90"
+          (i, j, isVertical)  = edgeToPosition board edge
+          rotation = if isVertical then "90" else "0"
+          width = boxSize
+          height = 6
+          widthpx = String.fromInt width ++ "px"
+          heightpx = String.fromInt height ++ "px"
+          toppx = String.fromInt ((0.5 + i) * toFloat boxSize |> round) ++ "px"
+          leftpx = (String.fromInt ((0.5 + j) * toFloat boxSize  - width / 2 |> round) ++ "px")
       in
-        div [ style "position" "absolute"
-            , style "background-color" "black"
-            , style "top" (String.fromFloat (i * toFloat (height + width) + width / 2) ++ "px")
-            , style "left" (String.fromFloat ((0.5 + j) * toFloat (height + width) - width / 2) ++ "px")
-            , style "width" (String.fromInt width ++ "px")
-            , style "height" (String.fromInt height ++ "px")
-            , style "transform" ("rotateZ(" ++ rotation ++ "deg)")
-            , style "transform-origin" "center"
-            ] [ "(" ++ String.fromFloat i ++ "," ++ String.fromFloat j ++ ")" |> text ]
+      case edgeType of
+        Wall ->
+          div [ style "position" "absolute"
+              , style "background-color" "#000000"
+              , style "top" toppx
+              , style "left" leftpx
+              , style "width" widthpx
+              , style "height" heightpx
+              , style "transform" ("rotateZ(" ++ rotation ++ "deg)")
+              , style "transform-origin" "center"
+              ] [ ]
+        Open -> div [] []
+        Gated n ->
+          div [ style "position" "absolute"
+              , style "top" toppx
+              , style "left" leftpx
+              , style "width" widthpx
+              , style "height" heightpx
+              , style "transform" ("rotateZ(" ++ rotation ++ "deg)")
+              , style "transform-origin" "center"
+              , style "display" "flex"
+              , style "justify-content" "space-evenly"
+              , style "align-items" "center"
+              ] (List.map (\index ->
+                  div [ style "box-sizing" "border-box"
+                      , style "background-color" (if index <= remainderBy n player.counter then "black" else "white")
+                      , style "flex-grow" "1"
+                      , style "flex-shrink" "1"
+                      , style "border" "1px solid black"
+                      , style "width" (toPx height)
+                      , style "height" (toPx height)
+                      , style "margin" "0 2px"
+                      ] []) (List.range 1 n))
 
     viewNode : Node -> Html Msg
     viewNode (Node id state) = div [ style "width" boxpx
                                , style "height" boxpx
-                               , style "background-color" "#FFFFFF"
                                , style "display" "flex"
                                , style "justify-content" "center"
                                , style "align-items" "center"
-                               , style "border" "1px solid red"
-                               , style "box-sizing" "border-box"
-                               , style "margin" (String.fromFloat (width / 2) ++ "px")
                                , class "node"
                                ] [ (if state == End then "★" else "") |> text ]
 
@@ -219,8 +244,8 @@ view { board, edges, player } =
           div  [ style "position" "relative"]
             (div [ style "width" boxpx
                 , style "height" boxpx
-                , style "background-color" "#000000"
-                , style "color" "white"
+                , style "z-index" "1"
+                , style "color" "#000000"
                 , style "position" "absolute"
                 , style "display" "flex"
                 , style "justify-content" "center"
@@ -239,3 +264,5 @@ view { board, edges, player } =
 calcPos : Int -> Int -> Int
 calcPos a b = toFloat (a + b) * 0.5 |> round
 
+toPx : Int -> String
+toPx num = String.fromInt num ++ "px"
