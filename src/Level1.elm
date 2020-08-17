@@ -1,6 +1,6 @@
 module Level1 exposing (..)
 
-import HuebrynthTypes exposing (..)
+import HuebrynthCore exposing (..)
 
 n0 = Node 0 Empty
 n1 = Node 1 Empty

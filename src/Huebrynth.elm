@@ -2,13 +2,14 @@ module Huebrynth exposing (..)
 
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
-import Html exposing (Attribute, Html, button, div, text, ul, li)
+import Html exposing (Attribute, Html, button, div, text, ul, li, p)
 import Html.Attributes exposing (style, class, tabindex)
 import Html.Events exposing (on, keyCode, onInput)
-import HuebrynthTypes exposing (..)
+import HuebrynthCore exposing (..)
 import Json.Decode as Json
 import Level1 exposing (..)
-import List exposing (map, length, indexedMap, concat)
+import Level3 exposing (..)
+import List exposing (map, length, indexedMap, concat, all)
 import List.Extra exposing (find, getAt)
 
 
@@ -73,14 +74,14 @@ subscriptions _ = onAnimationFrameDelta Frame
 
 init : flag -> (Model, Cmd Msg)
 init flag = (
-  { board = boardL1
-  , edges = edgesL1
+  { board = boardL3
+  , edges = edgesL3
   , player =
     { currentPosition =
       { x = 0
       , y = 0
       }
-    , targetNodeId = getStartNode boardL1 0
+    , targetNodeId = getStartNode boardL3 0
     , counter = 1
     }
   }, Cmd.none)
@@ -116,9 +117,12 @@ getNextTargetNode ({ currentPosition, targetNodeId} as player) board direction =
         Right -> coordToNode (x + 1) y board
         Down -> coordToNode x (y + 1) board
 
---lookupEdgeFromNodes : NodeId -> NodeId -> Edges -> Maybe Edge
-canMoveToNode : NodeId -> NodeId -> Bool
-canMoveToNode a b = True
+isPlayerTrapped : Player -> Board -> Bool
+isPlayerTrapped player board =
+  let
+      adjacentNodes = map (getNextTargetNode player board) [Left, Up, Right, Down]
+  in
+    False
 
 isCounterMultipleOfLock : Int -> Lock -> Bool
 isCounterMultipleOfLock counter lock = remainderBy lock counter == 0
@@ -128,6 +132,13 @@ update msg ({ board, edges, player } as model) =
   case msg of
     NoOp -> (model, Cmd.none)
     KeyDown code ->
+      if
+        (isPlayerTrapped player board)
+      then
+        ({ model | player = {
+          player | targetNodeId = getStartNode boardL3 0, counter = 0 }
+        }, Cmd.none)
+      else
       case (keyCodeToDirection code) of
         Nothing -> (model, Cmd.none)
         Just direction ->
@@ -185,14 +196,19 @@ view { board, edges, player } =
       case edgeType of
         Wall ->
           div [ style "position" "absolute"
-              , style "background-color" "#000000"
               , style "top" toppx
               , style "left" leftpx
               , style "width" widthpx
               , style "height" heightpx
               , style "transform" ("rotateZ(" ++ rotation ++ "deg)")
               , style "transform-origin" "center"
-              ] [ ]
+              , style "display" "flex"
+              ] [
+                div [ style "margin" "0 2px"
+                    , style "background-color" "#000000"
+                    , style "flex-grow" "1"
+                    ] []
+                ]
         Open -> div [] []
         Gated n ->
           div [ style "position" "absolute"
@@ -214,7 +230,7 @@ view { board, edges, player } =
                       , style "width" (toPx height)
                       , style "height" (toPx height)
                       , style "margin" "0 2px"
-                      ] []) (List.range 1 n))
+                      ] []) (List.range 1 (max 1 (n - 1))))
 
     viewNode : Node -> Html Msg
     viewNode (Node id state) = div [ style "width" boxpx
@@ -232,33 +248,46 @@ view { board, edges, player } =
 
     {x, y} = player.currentPosition
   in
-    div [ onKeyDown KeyDown
-        , tabindex 0
-        , style "width" "100vw"
-        , style "height" "100vh"
-        , style "display" "flex"
-        , style "justify-content" "center"
-        , style "align-items" "center"
-        ]
-        [
-          div  [ style "position" "relative"]
-            (div [ style "width" boxpx
-                , style "height" boxpx
-                , style "z-index" "1"
-                , style "color" "#000000"
-                , style "position" "absolute"
-                , style "display" "flex"
-                , style "justify-content" "center"
-                , style "align-items" "center"
-                , style "font-family" "arial"
-                , style "font-size" "20px"
-                , style "transform" ("translateX(" ++ String.fromInt x  ++ "px) translateY(" ++ String.fromInt y ++ "px)")
-                ] [
-                  div [] [ String.fromInt player.counter |> text ]
-                  ]
-                :: List.map viewEdge edges
-                ++ List.map viewRow board)
-        ]
+    div [] [
+      p [ style "position" "absolute"
+        , style "font-size" "40px"
+        , style "font-family" "Helvetica, Tahoma"
+        , style "font-weight" "100"
+        , style "margin" "25px"
+        , style "transform" "rotateZ(90deg)"
+        , style "transform-origin" "left"
+        , style "white-space" "nowrap"
+        ] [ "use arrow keys to get to star" |> text ],
+      div [ onKeyDown KeyDown
+          , tabindex 0
+          , style "width" "100vw"
+          , style "height" "100vh"
+          , style "display" "flex"
+          , style "justify-content" "center"
+          , style "align-items" "center"
+          ]
+          [
+            div [ style "position" "relative"
+                , style "border" "1px solid black"
+                ]
+              (div [ style "width" boxpx
+                  , style "height" boxpx
+                  , style "z-index" "1"
+                  , style "color" "#000000"
+                  , style "position" "absolute"
+                  , style "display" "flex"
+                  , style "justify-content" "center"
+                  , style "align-items" "center"
+                  , style "font-family" "arial"
+                  , style "font-size" "20px"
+                  , style "transform" ("translateX(" ++ String.fromInt x  ++ "px) translateY(" ++ String.fromInt y ++ "px)")
+                  ] [
+                    div [] [ String.fromInt player.counter |> text ]
+                    ]
+                  :: List.map viewEdge edges
+                  ++ List.map viewRow board)
+          ]
+      ]
 
 -- Utils
 calcPos : Int -> Int -> Int

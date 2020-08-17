@@ -1,4 +1,4 @@
-module HuebrynthTypes exposing (..)
+module HuebrynthCore exposing (..)
 
 import List.Extra exposing (find)
 import List exposing (concat, indexedMap)
